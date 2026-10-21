@@ -1,0 +1,275 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Shopping List</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 30px 15px;
+    font-family: Arial, sans-serif;
+    background: #f0fdf4;
+    color: #1f2937;
+}
+
+.container {
+    max-width: 650px;
+    margin: auto;
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px #0001;
+}
+
+h1 {
+    text-align: center;
+    color: #15803d;
+}
+
+.subtitle {
+    text-align: center;
+    color: #64748b;
+}
+
+.form-row {
+    display: flex;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+input {
+    flex: 1;
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+button {
+    padding: 11px 15px;
+    border: none;
+    border-radius: 8px;
+    background: #16a34a;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+button:hover {
+    background: #15803d;
+}
+
+.remove-btn {
+    background: #dc2626;
+}
+
+.remove-btn:hover {
+    background: #b91c1c;
+}
+
+.search {
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+.item-list {
+    list-style: none;
+    padding: 0;
+}
+
+.item-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    margin: 8px 0;
+    background: #f0fdf4;
+    border-radius: 8px;
+    overflow-wrap: anywhere;
+}
+
+.item-name {
+    flex: 1;
+}
+
+.count {
+    text-align: center;
+    color: #15803d;
+    font-weight: bold;
+}
+
+.message {
+    min-height: 20px;
+    color: #475569;
+}
+
+.empty {
+    text-align: center;
+    color: #64748b;
+    padding: 15px;
+}
+
+@media (max-width: 450px) {
+    .form-row {
+        flex-direction: column;
+    }
+
+    .item-list li {
+        align-items: flex-start;
+    }
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+    <h1>🛒 Smart Shopping List</h1>
+    <p class="subtitle">
+        Add, search, remove and manage your shopping items
+    </p>
+
+    <form id="addForm" class="form-row">
+        <input
+            type="text"
+            id="itemInput"
+            placeholder="Enter an item (e.g. Milk)"
+            aria-label="Shopping item"
+            required
+        >
+        <button type="submit">Add Item</button>
+    </form>
+
+    <input
+        type="text"
+        id="searchInput"
+        class="search"
+        placeholder="🔍 Search for an item..."
+        aria-label="Search shopping items"
+    >
+
+    <p class="count" id="itemCount">Total items: 0</p>
+
+    <p class="message" id="message" role="status">
+        Add your first shopping item!
+    </p>
+
+    <h2>Your Shopping List</h2>
+    <ul id="itemList" class="item-list"></ul>
+
+</div>
+
+<script>
+// Array to store shopping items
+let shoppingList = [];
+
+const addForm = document.getElementById("addForm");
+const itemInput = document.getElementById("itemInput");
+const searchInput = document.getElementById("searchInput");
+const itemList = document.getElementById("itemList");
+const itemCount = document.getElementById("itemCount");
+const message = document.getElementById("message");
+
+// Add a new item
+addForm.addEventListener("submit", function(event) {
+    event.preventDefault();
+
+    const item = itemInput.value.trim();
+
+    if (item === "") {
+        message.textContent = "Please enter an item.";
+        return;
+    }
+
+    const alreadyExists = shoppingList.some(
+        existing => existing.toLowerCase() === item.toLowerCase()
+    );
+
+    if (alreadyExists) {
+        message.textContent = "This item is already in your list.";
+        return;
+    }
+
+    shoppingList.push(item);
+
+    itemInput.value = "";
+    message.textContent = item + " added successfully.";
+
+    displayItems();
+});
+
+// Search items
+searchInput.addEventListener("input", displayItems);
+
+// Remove an item
+function removeItem(itemToRemove) {
+    shoppingList = shoppingList.filter(
+        item => item !== itemToRemove
+    );
+
+    message.textContent = itemToRemove + " removed.";
+    displayItems();
+}
+
+// Display all items or matching search results
+function displayItems() {
+    const searchText = searchInput.value.trim().toLowerCase();
+
+    const filteredItems = shoppingList.filter(item =>
+        item.toLowerCase().includes(searchText)
+    );
+
+    itemList.replaceChildren();
+
+    itemCount.textContent =
+        "Total items: " + shoppingList.length;
+
+    if (filteredItems.length === 0) {
+        const emptyItem = document.createElement("li");
+        emptyItem.className = "empty";
+        emptyItem.textContent = shoppingList.length === 0
+            ? "Your shopping list is empty."
+            : "No matching items found.";
+
+        itemList.appendChild(emptyItem);
+        return;
+    }
+
+    filteredItems.forEach(function(item) {
+        const li = document.createElement("li");
+
+        const name = document.createElement("span");
+        name.className = "item-name";
+        name.textContent = "🛍️ " + item;
+
+        const removeButton = document.createElement("button");
+        removeButton.className = "remove-btn";
+        removeButton.textContent = "Remove";
+        removeButton.setAttribute(
+            "aria-label", "Remove " + item
+        );
+
+        removeButton.addEventListener("click", function() {
+            removeItem(item);
+        });
+
+        li.append(name, removeButton);
+        itemList.appendChild(li);
+    });
+}
+
+// Show the initial empty list
+displayItems();
+</script>
+
+</body>
+</html>
